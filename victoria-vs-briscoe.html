@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análisis Profundo — 2 Casas (Argyle vs Lantana)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{
+ --bg:#0b1220;--ink:#0f172a;--mut:#64748b;--line:#e6eaf0;--soft:#f1f5f9;
+ --a:#4f46e5;--a2:#0ea5e9;--win:#16a34a;--winbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#dc2626;
+ --vic:#4f46e5;--bri:#0ea5e9;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--ink);background:#f6f7fb;line-height:1.5;}
+.wrap{max-width:1180px;margin:0 auto;padding:20px;}
+a{color:var(--a);}
+.hero{background:linear-gradient(135deg,#0f172a,#1e293b 55%,#312e81);color:#fff;border-radius:20px;padding:30px 30px 26px;position:relative;overflow:hidden;}
+.hero h1{margin:0 0 6px;font-size:27px;}
+.hero p{margin:0;color:#cbd5e1;font-size:14.5px;max-width:760px;}
+.hero .pill{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:3px 11px;font-size:12px;margin:10px 6px 0 0;color:#e2e8f0;}
+.sec{margin:26px 0;}
+.sec h2{font-size:19px;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+.sec .lead{color:var(--mut);font-size:13.5px;margin:0 0 14px;}
+.verdict{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(15,23,42,.05);}
+.vtoggle{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 16px;}
+.vtoggle button{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:9px;padding:8px 13px;font-size:13px;cursor:pointer;font-weight:600;}
+.vtoggle button.on{background:var(--a);color:#fff;border-color:var(--a);}
+.vwin{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:780px){.vwin{grid-template-columns:1fr;}.vs-grid{grid-template-columns:1fr!important;}.cost-grid{grid-template-columns:1fr!important;}}
+.vcard{border-radius:14px;padding:16px;border:2px solid var(--line);}
+.vcard.is-win{border-color:var(--win);background:linear-gradient(180deg,#f0fdf4,#fff);}
+.vcard .wlabel{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--win);font-weight:800;}
+.vcard h3{margin:3px 0 2px;font-size:17px;}
+.vcard .why{font-size:13px;color:#334155;margin-top:8px;}
+.vs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.hcard{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(15,23,42,.05);}
+.hcard .ph{height:200px;background-size:cover;background-position:center;background-color:#cbd5e1;position:relative;}
+.hcard .tagchip{position:absolute;top:12px;left:12px;color:#fff;font-weight:800;font-size:12px;padding:4px 11px;border-radius:20px;}
+.hcard .body{padding:16px;}
+.hcard h3{margin:0;font-size:18px;}
+.hcard .addr{color:var(--mut);font-size:13px;margin-bottom:10px;}
+.bigprice{font-size:26px;font-weight:800;}
+.psub{color:var(--mut);font-size:13px;}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:12px 0;font-size:13px;}
+.kv div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding-bottom:4px;}
+.kv span:first-child{color:var(--mut);} .kv b{color:var(--ink);}
+.story{font-size:12.5px;background:var(--soft);border-radius:10px;padding:10px 12px;color:#334155;margin-top:6px;}
+.btn{display:inline-block;margin-top:12px;background:var(--ink);color:#fff;text-decoration:none;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:600;}
+table.cmp{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13.5px;box-shadow:0 4px 18px rgba(15,23,42,.05);}
+table.cmp th,table.cmp td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--line);}
+table.cmp thead th{background:var(--ink);color:#fff;font-size:12.5px;position:sticky;top:0;}
+table.cmp thead th:nth-child(1){width:32%;}
+table.cmp td.metric{color:var(--mut);}
+table.cmp td.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+table.cmp td.win{background:var(--winbg);color:#14532d;}
+table.cmp td.win::after{content:" ◀";color:var(--win);font-weight:800;}
+.catrow td{background:#eef2ff;color:var(--a);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;}
+.cost-grid{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start;}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(15,23,42,.05);}
+.ctrl{margin:10px 0;font-size:13px;}
+.ctrl label{display:flex;justify-content:space-between;color:var(--mut);margin-bottom:3px;}
+.ctrl input{width:100%;accent-color:var(--a);}
+.chartwrap{position:relative;height:300px;}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.feat .fbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;}
+.feat h4{margin:0 0 8px;font-size:15px;}
+.taglist{display:flex;flex-wrap:wrap;gap:5px;}
+.taglist span{background:var(--soft);border-radius:7px;padding:3px 9px;font-size:11.5px;color:#334155;}
+.taglist span.hot{background:#ede9fe;color:#5b21b6;font-weight:600;}
+#map{height:440px;border-radius:14px;border:1px solid var(--line);}
+.srcgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.srcbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;}
+.srcbox h4{margin:0 0 10px;font-size:14px;}
+.srcitem{font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line);}
+.srcitem:last-child{border:none;}
+.srcitem b{color:var(--ink);} .srcitem .st{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;}
+.st.ok{background:var(--winbg);color:#14532d;} .st.req{background:var(--warnbg);color:var(--warn);} .st.free{background:#e0f2fe;color:#075985;}
+.flags{background:#fff;border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:14px 16px;}
+.flags li{margin:5px 0;font-size:13px;}
+.foot{color:var(--mut);font-size:11.5px;text-align:center;padding:22px 0 6px;line-height:1.6;}
+.mini{font-size:11px;color:var(--mut);}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.badge.cut{background:#fee2e2;color:#991b1b;} .badge.new{background:#dcfce7;color:#14532d;} .badge.pool{background:#cffafe;color:#155e75;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+ <h1>Análisis Profundo: 8312 Victoria Ln vs 1812 Briscoe Dr</h1>
+ <p>Dos casas en el mismo barrio (zip 76226, a ~1 milla una de otra) para la familia que se muda a Dallas. Mismos colegios (Denton ISD), misma zona de inundación: la decisión es <b>casa, precio y valor</b>. Datos de Zillow + 6 fuentes extra.</p>
+ <div><span class="pill" id="pill-schools"></span><span class="pill" id="pill-dist"></span><span class="pill" id="pill-flood"></span><span class="pill" id="pill-income"></span></div>
+</div>
+
+<div class="sec">
+ <h2>🏆 Veredicto según tu prioridad</h2>
+ <p class="lead">Elegí qué pesa más y la recomendación se ajusta. No hay un ganador absoluto: depende de qué buscás.</p>
+ <div class="verdict">
+  <div class="vtoggle" id="vtoggle"></div>
+  <div class="vwin" id="vwin"></div>
+ </div>
+</div>
+
+<div class="sec">
+ <h2>Las dos casas, lado a lado</h2>
+ <div class="vs-grid" id="cards"></div>
+</div>
+
+<div class="sec">
+ <h2>📊 Comparación maestra (todas las variables)</h2>
+ <p class="lead">La celda resaltada en verde marca cuál casa gana en cada métrica. ◀</p>
+ <table class="cmp"><thead><tr><th>Métrica</th><th style="text-align:right" id="th-a"></th><th style="text-align:right" id="th-b"></th></tr></thead><tbody id="cmpbody"></tbody></table>
+</div>
+
+<div class="sec">
+ <h2>💰 Costo mensual real (con impuestos MUD/PID incluidos)</h2>
+ <p class="lead">Ojo: el impuesto efectivo real es ~1.9% (no el 1.51% que muestra Zillow), por los MUD/PID de estas comunidades. Movés los supuestos y se recalcula.</p>
+ <div class="cost-grid">
+  <div class="panel">
+   <div class="ctrl"><label>Tasa hipoteca <b id="rateV"></b></label><input type="range" id="rate" min="5" max="8" step="0.1" value="6.6"></div>
+   <div class="ctrl"><label>Enganche <b id="downV"></b></label><input type="range" id="down" min="5" max="50" step="5" value="20"></div>
+   <div id="costbreak" style="font-size:13px;margin-top:10px;"></div>
+  </div>
+  <div class="panel"><div class="chartwrap"><canvas id="cCost"></canvas></div></div>
+ </div>
+</div>
+
+<div class="sec">
+ <h2>🎯 Perfil comparado</h2>
+ <p class="lead">Cada eje normalizado entre las dos casas (más afuera = mejor en esa dimensión).</p>
+ <div class="panel"><div class="chartwrap" style="height:360px"><canvas id="cRadar"></canvas></div></div>
+</div>
+
+<div class="sec">
+ <h2>🏷️ Precio vs. comparables del barrio</h2>
+ <p class="lead">Dónde cae el precio de lista de cada casa respecto a ventas/listados cercanos (US$/pie²).</p>
+ <div class="feat" id="comps"></div>
+</div>
+
+<div class="sec">
+ <h2>📈 La historia de precio de Victoria Ln</h2>
+ <p class="lead">Comprada en ~$414k (2020), listada a $760k y ya bajada a $745k. Briscoe recién se listó (sin historial).</p>
+ <div class="panel"><div class="chartwrap"><canvas id="cHist"></canvas></div></div>
+</div>
+
+<div class="sec">
+ <h2>🧱 Características y calidad</h2>
+ <div class="feat" id="features"></div>
+</div>
+
+<div class="sec">
+ <h2>🗺️ Ubicación y commute</h2>
+ <p class="lead">Las dos casas (🟣 Victoria, 🔵 Briscoe), tu trabajo (🏢) y DFW. Tiempos en auto sin tráfico en vivo.</p>
+ <div id="map"></div>
+</div>
+
+<div class="sec">
+ <h2>🚩 Banderas y cosas a verificar</h2>
+ <div class="flags"><ul id="flags"></ul></div>
+</div>
+
+<div class="sec">
+ <h2>🔌 Fuentes de datos</h2>
+ <p class="lead">Lo que ya está integrado y lo que sugiero sumar para un análisis aún más profundo.</p>
+ <div class="srcgrid">
+  <div class="srcbox"><h4>✅ Integradas</h4><div id="src-in"></div></div>
+  <div class="srcbox"><h4>➕ Sugeridas para sumar</h4><div id="src-sug"></div></div>
+ </div>
+</div>
+
+<div class="foot" id="foot"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const H = [{"address": "8312 Victoria Ln", "city": "Argyle", "zip": "76226", "lat": 33.103535, "lng": -97.1236, "status": "FOR_SALE", "price": 745000, "origList": 760000, "listChangePct": -2.0, "zest": 743200, "ppsf": 217, "rent": 4549, "rentYield": 7.3, "beds": 4, "baths": 4, "sqft": 3429, "year": 2008, "lotAcres": 0.17, "lotSqft": 7405, "stories": 2, "garage": 3, "fireplaces": 2, "privatePool": false, "poolFeatures": ["Pool", "Community"], "hoa": 125, "insurance": 2682, "effTaxRate": 1.87, "taxRateZillow": 1.51, "annualTaxEff": 13932, "annualTaxZillow": 11250, "latestTax": {"paid": 11510, "value": 616120}, "schools": [{"n": "Blanton Elementary School", "r": 9, "l": "Primary", "d": 0.8, "g": "PK-5"}, {"n": "Harpool Middle School", "r": 9, "l": "Middle", "d": 0.9, "g": "6-8"}, {"n": "Guyer High School", "r": 7, "l": "High", "d": 2.5, "g": "9-12"}], "district": "Denton ISD", "commute": {"Trabajo (Kimberly-Clark, Irving)": {"min": 39, "mi": 23.3}, "DFW Airport": {"min": 33, "mi": 18.3}, "Downtown Dallas": {"min": 51, "mi": 34.9}}, "flood": {"zone": "X", "subtype": "AREA OF MINIMAL FLOOD HAZARD", "sfha": false}, "elevation_ft": 608, "county": "Denton County", "dom": 6, "favs": 102, "views": 1143, "datePosted": "2026-06-12", "arch": "Traditional,Detached", "roof": "Composition", "foundation": ["Slab"], "construction": ["Brick"], "flooring": ["Carpet", "Ceramic Tile", "Engineered Hardwood"], "appliances": ["Double Oven", "Dishwasher", "Gas Cooktop", "Disposal", "Gas Water Heater", "Microwave"], "heating": ["Natural Gas"], "cooling": ["Central Air", "Ceiling Fan(s)"], "exterior": ["Outdoor Grill", "Rain Gutters"], "community": ["Clubhouse", "Fitness Center", "Golf", "Pickleball", "Pool", "Tennis Court(s)", "Curbs", "Sidewalks"], "amenities": ["Maintenance Front Yard"], "parking": ["Door-Multi", "Driveway", "Garage Faces Front", "Tandem"], "compMedianPpsf": 196, "comps": [{"addr": "8308 Victoria Ln", "price": 674200, "sqft": 3427, "beds": 4, "baths": 3, "status": "OTHER", "zpid": 69689087}, {"addr": "8316 Victoria Ln", "price": 725200, "sqft": 3901, "beds": 5, "baths": 4, "status": "OTHER", "zpid": 69689085}, {"addr": "8304 Victoria Ln", "price": 695800, "sqft": 3553, "beds": 4, "baths": 4, "status": "OTHER", "zpid": 69689088}, {"addr": "8317 Victoria Ln", "price": 750000, "sqft": 3859, "beds": 4, "baths": 4, "status": "FOR_SALE", "zpid": 89464150}, {"addr": "8320 Victoria Ln", "price": 836700, "sqft": 4022, "beds": 5, "baths": 4, "status": "OTHER", "zpid": 69689084}, {"addr": "8309 Victoria Ln", "price": 744700, "sqft": 3740, "beds": 5, "baths": 4, "status": "OTHER", "zpid": 89516841}, {"addr": "8300 Victoria Ln", "price": 644400, "sqft": 2933, "beds": 4, "baths": 3, "status": "OTHER", "zpid": 69689089}, {"addr": "8400 Jefferson Way", "price": 757500, "sqft": 3960, "beds": 5, "baths": 4, "status": "OTHER", "zpid": 79899169}], "priceHistory": [{"date": "2026-06-18", "event": "Price change", "price": 745000}, {"date": "2026-06-12", "event": "Listed for sale", "price": 760000}, {"date": "2020-08-11", "event": "Sold", "price": null}, {"date": "2020-08-01", "event": "Pending sale", "price": 414000}, {"date": "2020-06-29", "event": "Price change", "price": 414000}, {"date": "2020-05-23", "event": "Listed for sale", "price": 419000}, {"date": "2018-05-07", "event": "Listing removed", "price": 393000}, {"date": "2018-02-14", "event": "Pending sale", "price": 393000}, {"date": "2018-01-12", "event": "Price change", "price": 393000}, {"date": "2018-01-04", "event": "Price change", "price": 395000}, {"date": "2017-12-21", "event": "Price change", "price": 397000}, {"date": "2017-12-15", "event": "Price change", "price": 398000}, {"date": "2017-12-07", "event": "Price change", "price": 399000}, {"date": "2017-11-10", "event": "Price change", "price": 403000}, {"date": "2017-11-03", "event": "Price change", "price": 404000}, {"date": "2017-10-01", "event": "Listed for sale", "price": 410000}, {"date": "2015-04-20", "event": "Sold", "price": null}, {"date": "2015-02-27", "event": "Pending sale", "price": 315000}, {"date": "2015-01-09", "event": "Listed for sale", "price": 315000}, {"date": "2013-04-30", "event": "Listing removed", "price": 338000}, {"date": "2013-03-28", "event": "Price change", "price": 338000}, {"date": "2013-03-11", "event": "Price change", "price": 325000}, {"date": "2012-12-21", "event": "Listed for sale", "price": 335000}, {"date": "2012-05-04", "event": "Listing removed", "price": 315650}, {"date": "2012-02-16", "event": "Listed for sale", "price": 315650}], "mls": "21297204", "broker": "Ebby Halliday, REALTORS", "url": "https://www.zillow.com/homedetails/8312-Victoria-Ln-Argyle-TX-76226/69689086_zpid/", "desc": "This exceptional home showcases designer details and custom touches throughout. Upon entry, you're welcomed by a stunning sitting area highlighted by a striking architectural feature wall that immediately captures attention. Just off the foyer, a private home office with French doors offers an ideal work-from-home setting. The inviting family room is the perfect place to relax, whether enjoying a movie night or curling up with a book by the fireplace. Open to the family room, the well-appointed kitchen features a large island with a gas cooktop, double ovens, a built-in microwave, abundant workspace, and both island seating and a sunny breakfast area.  The spacious primary suite provides a tranquil retreat with serene backyard views. The beautifully updated primary bath delivers a true spa-like experience, complete with a luxurious wet room featuring a soaking tub and dual rain shower he", "photos": ["https://photos.zillowstatic.com/fp/fdc76a7b0bc953db1a05229eed4fdf59-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/be8426cc7636ad0fd24715ed37e0931a-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/c98f9f1bea73084355ea8607a5d11717-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/576638d403d095ca5d93af10aa4e1535-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/c10b1fa9cb6645c2d461bd9eb871e68e-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/6bd1bd1c741a2072c1653c68e44f0f03-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/14f5396c359fe31a1ea90d318eeb6413-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/b47fc204c8ad0190ac9ed8a5a0b8aead-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/649521b654cf2c79822b7601d2875635-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/a4c3f951c61d9d73e187ca1e2329ab8f-uncropped_scaled_within_1536_1152.jpg"], "tag": "Argyle"}, {"address": "1812 Briscoe Dr", "city": "Lantana", "zip": "76226", "lat": 33.11205, "lng": -97.10927, "status": "FOR_SALE", "price": 824900, "origList": 824900, "listChangePct": 0, "zest": null, "ppsf": 255, "rent": null, "rentYield": null, "beds": 4, "baths": 4, "sqft": 3240, "year": 2018, "lotAcres": 0.212, "lotSqft": 9235, "stories": 2, "garage": 2, "fireplaces": 1, "privatePool": true, "poolFeatures": ["Cabana", "In Ground", "Other", "Pool", "Private", "Water Feature", "Community"], "hoa": 131, "insurance": 2969.64, "effTaxRate": 1.97, "taxRateZillow": 1.51, "annualTaxEff": 16251, "annualTaxZillow": 12456, "latestTax": {"paid": 14416, "value": 731809}, "schools": [{"n": "Blanton Elementary School", "r": 9, "l": "Primary", "d": 0.9, "g": "PK-5"}, {"n": "Harpool Middle School", "r": 9, "l": "Middle", "d": 0.9, "g": "6-8"}, {"n": "Guyer High School", "r": 7, "l": "High", "d": 1.7, "g": "9-12"}], "district": "Denton ISD", "commute": {"Trabajo (Kimberly-Clark, Irving)": {"min": 38, "mi": 22.9}, "DFW Airport": {"min": 32, "mi": 18.0}, "Downtown Dallas": {"min": 49, "mi": 36.3}}, "flood": {"zone": "X", "subtype": "AREA OF MINIMAL FLOOD HAZARD", "sfha": false}, "elevation_ft": 628, "county": "Denton County", "dom": 1, "favs": 15, "views": 259, "datePosted": "2026-06-17", "arch": "Traditional,Detached", "roof": "Composition", "foundation": ["Slab"], "construction": ["Brick"], "flooring": ["Carpet", "Tile", "Wood"], "appliances": ["Some Gas Appliances", "Dishwasher", "Electric Oven", "Gas Cooktop", "Disposal", "Gas Water Heater", "Microwave", "Plumbed For Gas", "Water Softener", "Tankless Water Heater", "Vented Exhaust Fan", "Water Purifier"], "heating": ["Central", "Natural Gas", "Zoned"], "cooling": ["Central Air", "Ceiling Fan(s)", "Electric", "Zoned"], "exterior": ["Outdoor Living Area", "Private Yard", "Rain Gutters", "Fire Pit"], "community": ["Clubhouse", "Fitness Center", "Golf", "Lake", "Other", "Playground", "Park", "Pickleball", "Pool", "Restaurant", "Sidewalks", "Tennis Court(s)", "Trails/Paths"], "amenities": ["Maintenance Front Yard"], "parking": ["Driveway", "Garage Faces Front", "Garage", "Garage Door Opener"], "compMedianPpsf": 236, "comps": [{"addr": "1816 Briscoe Dr", "price": 530200, "sqft": 2248, "beds": 4, "baths": 3, "status": "OTHER", "zpid": 249593508}, {"addr": "9304 Lemon Dr", "price": 679200, "sqft": 2532, "beds": 3, "baths": 2, "status": "OTHER", "zpid": 333480488}, {"addr": "9308 Lemon Dr", "price": 585300, "sqft": 2798, "beds": null, "baths": null, "status": "OTHER", "zpid": 333480076}, {"addr": "1820 Briscoe Dr", "price": 560200, "sqft": 2283, "beds": 3, "baths": 2, "status": "OTHER", "zpid": 249589400}, {"addr": "1808 Silverton Dr", "price": 500100, "sqft": 2114, "beds": 3, "baths": 2, "status": "OTHER", "zpid": 249590983}, {"addr": "1812 Silverton Dr", "price": 669200, "sqft": 3391, "beds": 5, "baths": 5, "status": "OTHER", "zpid": 249593372}, {"addr": "9312 Lemon Dr", "price": 0, "sqft": 3459, "beds": 4, "baths": 4, "status": "SOLD", "zpid": 305923782}, {"addr": "1816 Silverton Dr", "price": 535800, "sqft": 2321, "beds": 4, "baths": 3, "status": "OTHER", "zpid": 249593655}], "priceHistory": [{"date": "2026-06-17", "event": "Listed for sale", "price": 824900}], "mls": "21303850", "broker": "Berkshire HathawayHS PenFed TX", "url": "https://www.zillow.com/homedetails/1812-Briscoe-Dr-Lantana-TX-76226/302680227_zpid/", "desc": "Step into a world of modern luxury and resort-style living in this stunning Lantana masterpiece, where every detail is designed for seamless entertaining and effortless daily flow. From the moment you enter, soaring ceilings, extensive wood floors, wrought iron spindles, decorative lighting, and elegant crown molding create a breathtaking first impression, anchored by a sleek, modern floor-to-ceiling marble fireplace in the impressive family room. The chef’s kitchen serves as a high-end culinary workspace, complete with granite counters, white cabinets, a pantry, stainless steel appliances with a recently replaced dishwasher, and a massive central island featuring a breakfast bar. Retreat to the lavish primary suite offering bay windows, a sliding barn door to the ensuite bath, separate quartz vanities, a freestanding tub, a separate shower, and a large walk-in closet with built-ins. The", "photos": ["https://photos.zillowstatic.com/fp/90710c862e6842005b397dae3beb40cd-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/e2e3896b36c1192ffb41a611e908f4e4-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/21e15ed59c826ec4d4bf0ee5efb0d492-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/9433bf357ab7a7e9f20911ad1f492703-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/2064401d94dcabd553abbc2f9aa89d6d-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/48b5c1b3d729f34fa21b188b7613b1ac-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/7d2e50a7610cbfacc5aa218b4a166f78-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/06be4e206d53852d8b63e51f55929941-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/e0e57e30e0830f825c27dace21531aa7-uncropped_scaled_within_1536_1152.jpg", "https://photos.zillowstatic.com/fp/edb3ff8f1fce7f3d3f753085022d4ef6-uncropped_scaled_within_1536_1152.jpg"], "tag": "Lantana"}];        // [Victoria, Briscoe]
+const M = {"work": {"name": "Kimberly-Clark", "addr": "351 Phelps Dr, Irving", "lat": 32.8688668, "lng": -96.9492681}, "dfw": {"name": "DFW Airport", "lat": 32.8975, "lng": -97.0404}, "downtown": {"name": "Downtown Dallas", "lat": 32.7767, "lng": -96.797}, "mortgageRate": 6.6, "zipIncome": 180982, "lantanaIncome": 199489, "hispanicArgyle": 9.0, "hispanicLantana": 8.4, "johnsCreekHispanic": 7.0, "sources": [["Zillow (vía Apify)", "Precio, Zestimate, renta estimada, historial de precio e impuestos, colegios, todas las caracteristicas, fotos y comparables", "integrada"], ["OSRM routing", "Commute en auto (ruta real) al trabajo, DFW y centro de Dallas", "integrada"], ["FEMA NFHL", "Zona de inundacion oficial (flood zone)", "integrada"], ["USGS Elevation", "Elevacion del terreno", "integrada"], ["Censo / IncomeByZip", "Ingreso medio del area y % comunidad latina", "integrada"], ["GreatSchools (vía Zillow)", "Ratings de colegios asignados", "integrada"]], "suggested": [["Google Distance Matrix", "Commute con trafico real en hora pico (ida 8am / vuelta 6pm)", "requiere API key"], ["Denton County CAD", "Tasacion oficial, exenciones y montos exactos de MUD/PID", "scraping / consulta"], ["Walk/Bike/Transit Score", "Caminabilidad y acceso a servicios", "requiere API key"], ["Crime / seguridad", "Indices de criminalidad por zona (CrimeGrade, Sheriff de Denton)", "requiere fuente"], ["HowLoud / ruido aviones", "Ruido de aeronaves (estan bajo zona de DFW)", "requiere API key"], ["FCC Broadband Map", "Disponibilidad de fibra/internet (clave para trabajo remoto)", "gratis, integrable"], ["TEA / STAAR scores", "Puntajes y college-readiness reales de los colegios", "gratis, integrable"], ["AirNow AQI", "Calidad del aire", "gratis, integrable"], ["Cotizacion de seguro real", "Seguro de hogar (Texas tiene granizo, primas altas)", "requiere broker"]]};
+const A = H[0], B = H[1];
+const VIC = '#4f46e5', BRI = '#0ea5e9';
+const usd = n => n==null?'—':'US$'+Math.round(n).toLocaleString('en-US');
+const usdk = n => n==null?'—':'$'+Math.round(n/1000)+'k';
+
+document.getElementById('pill-schools').textContent = '🎓 Mismos colegios: Blanton 9 · Harpool 9 · Guyer 7';
+document.getElementById('pill-dist').textContent = '📍 A ~1 milla entre sí (zip 76226)';
+document.getElementById('pill-flood').textContent = '🌊 Ambas zona X (riesgo mínimo de inundación)';
+document.getElementById('pill-income').textContent = '💵 Ingreso del área ~US$181k (Lantana ~$199k)';
+
+// ---------- monthly cost ----------
+function pmt(p,rate,down){const L=p*(1-down/100),r=rate/100/12,n=360;return r>0?L*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1):L/n;}
+function monthly(h,rate,down){
+ const pi=pmt(h.price,rate,down);
+ const tax=h.annualTaxEff/12, hoa=h.hoa||0, ins=(h.insurance||h.price*0.0045)/12;
+ return {pi,tax,hoa,ins,total:pi+tax+hoa+ins};
+}
+
+// ---------- verdict ----------
+const PRI = [
+ {k:'value', label:'Valor / precio', pick:()=> A, why:{
+   A:'Más barata (US$80k menos), US$217/pie² vs US$255, interior más grande (3.429 vs 3.240 pie²), 3 cocheras y ya bajó US$15k (margen para negociar).',
+   B:''}},
+ {k:'turnkey', label:'Casa nueva y lista', pick:()=> B, why:{
+   A:'', B:'Construida en 2018 (10 años más nueva), pileta privada con cabana, terminaciones premium (calentador tankless, ablandador y purificador de agua, HVAC zonificado) y lote más grande.'}},
+ {k:'lowcost', label:'Menor costo mensual', pick:()=> A, why:{
+   A:'Menor precio + impuesto efectivo más bajo (1.87% vs 1.97%) = cuota total más baja por mes.', B:''}},
+ {k:'commute', label:'Más cerca del trabajo', pick:()=> A, why:{
+   A:'Prácticamente empatan (~38–39 min), pero Victoria queda un toque mejor en valor a igual commute.', B:'Empatan en commute (~38 min).'}},
+ {k:'family', label:'Familia / pileta / espacio', pick:()=> B, why:{
+   A:'', B:'Pileta privada con cabana y water feature, lote más grande (0.21 vs 0.17 ac) y comunidad con lago, pickleball, restaurant y trails.'}},
+];
+function renderVerdict(active){
+ document.getElementById('vtoggle').innerHTML = PRI.map(p=>`<button data-k="${p.k}" class="${p.k===active?'on':''}">${p.label}</button>`).join('');
+ document.querySelectorAll('#vtoggle button').forEach(b=>b.onclick=()=>renderVerdict(b.dataset.k));
+ const p = PRI.find(x=>x.k===active);
+ const winner = p.pick(), loser = winner===A?B:A;
+ const wlabel = winner===A?'Victoria Ln (Argyle)':'Briscoe Dr (Lantana)';
+ const llabel = loser===A?'Victoria Ln (Argyle)':'Briscoe Dr (Lantana)';
+ document.getElementById('vwin').innerHTML =
+  `<div class="vcard is-win"><div class="wlabel">✓ Mejor para "${p.label}"</div><h3>${wlabel}</h3><div class="why">${p.why[winner===A?'A':'B']}</div></div>`+
+  `<div class="vcard"><div class="wlabel" style="color:#94a3b8">La otra opción</div><h3>${llabel}</h3><div class="why" style="color:#64748b">${p.why[loser===A?'A':'B']||'Queda segunda en esta prioridad puntual.'}</div></div>`;
+}
+renderVerdict('value');
+
+// ---------- side-by-side cards ----------
+function card(h,color){
+ const cut = h.listChangePct<0?`<span class="badge cut">▼ ${Math.abs(h.listChangePct)}% (bajó US$${(h.origList-h.price).toLocaleString()})</span>`:(h.dom<=2?'<span class="badge new">recién listada</span>':'');
+ const pool = h.privatePool?'<span class="badge pool">🏊 pileta privada</span>':'<span class="mini">pileta comunitaria</span>';
+ return `<div class="hcard">
+  <div class="ph" style="background-image:url('${h.photos[0]||''}')"><span class="tagchip" style="background:${color}">${h.tag}</span></div>
+  <div class="body">
+   <h3>${h.address}</h3><div class="addr">${h.city}, TX ${h.zip} · ${h.district}</div>
+   <div class="bigprice">${usd(h.price)}</div><div class="psub">US$${h.ppsf}/pie² · ${cut}</div>
+   <div class="kv">
+    <div><span>Dormitorios</span><b>${h.beds}</b></div><div><span>Baños</span><b>${h.baths}</b></div>
+    <div><span>Superficie</span><b>${h.sqft.toLocaleString()} pie²</b></div><div><span>Año</span><b>${h.year}</b></div>
+    <div><span>Lote</span><b>${h.lotAcres} ac</b></div><div><span>Cocheras</span><b>${h.garage}</b></div>
+    <div><span>Pileta</span><b>${pool}</b></div><div><span>Chimeneas</span><b>${h.fireplaces||'—'}</b></div>
+    <div><span>HOA</span><b>US$${h.hoa}/mes</b></div><div><span>Impuesto efect.</span><b>${h.effTaxRate}%</b></div>
+    <div><span>Renta est.</span><b>${h.rent?usd(h.rent)+'/mes':'s/d'}</b></div><div><span>Commute trabajo</span><b>${(h.commute['Trabajo (Kimberly-Clark, Irving)']||{}).min||'—'} min</b></div>
+   </div>
+   <div class="story">${h.desc.slice(0,260)}…</div>
+   <a class="btn" href="${h.url}" target="_blank">Ver en Zillow ↗</a>
+  </div></div>`;
+}
+document.getElementById('cards').innerHTML = card(A,VIC)+card(B,BRI);
+document.getElementById('th-a').textContent = 'Victoria Ln (Argyle)';
+document.getElementById('th-b').textContent = 'Briscoe Dr (Lantana)';
+
+// ---------- master comparison ----------
+const ROWS = [
+ ['PRECIO Y VALOR'],
+ ['Precio de lista', h=>usd(h.price), 'price', 'low'],
+ ['Precio por pie²', h=>'US$'+h.ppsf, 'ppsf', 'low'],
+ ['Zestimate', h=>h.zest?usd(h.zest):'s/d', 'zest', 'none'],
+ ['vs. mediana comparables ($/pie²)', h=>h.compMedianPpsf?('US$'+h.compMedianPpsf+' ('+(h.ppsf>h.compMedianPpsf?'+':'')+Math.round((h.ppsf-h.compMedianPpsf)/h.compMedianPpsf*100)+'%)'):'s/d', '_cmp', 'low'],
+ ['Renta estimada / mes', h=>h.rent?usd(h.rent):'s/d', 'rent', 'high'],
+ ['Yield bruto de renta', h=>h.rentYield?h.rentYield+'%':'s/d', 'rentYield', 'high'],
+ ['Cambio de precio en la lista', h=>h.listChangePct?h.listChangePct+'%':'sin cambios', 'listChangePct', 'low'],
+ ['IMPUESTOS (con MUD/PID)'],
+ ['Tasa efectiva real', h=>h.effTaxRate+'%', 'effTaxRate', 'low'],
+ ['Impuesto anual (real)', h=>usd(h.annualTaxEff), 'annualTaxEff', 'low'],
+ ['Lo que sugiere Zillow (1.51%)', h=>usd(h.annualTaxZillow)+' ⚠', 'annualTaxZillow', 'none'],
+ ['CASA Y ESPACIO'],
+ ['Superficie cubierta', h=>h.sqft.toLocaleString()+' pie²', 'sqft', 'high'],
+ ['Lote', h=>h.lotAcres+' ac ('+h.lotSqft.toLocaleString()+' pie²)', 'lotAcres', 'high'],
+ ['Año de construcción', h=>h.year, 'year', 'high'],
+ ['Dormitorios', h=>h.beds, 'beds', 'high'],
+ ['Baños', h=>h.baths, 'baths', 'high'],
+ ['Cocheras', h=>h.garage, 'garage', 'high'],
+ ['Chimeneas', h=>h.fireplaces||'—', 'fireplaces', 'high'],
+ ['Pileta', h=>h.privatePool?'Privada ✓':'Comunitaria', 'privatePool', 'boolhigh'],
+ ['COSTO MENSUAL Y CARGOS'],
+ ['HOA / mes', h=>'US$'+h.hoa, 'hoa', 'low'],
+ ['Seguro estimado / año', h=>usd(h.insurance), 'insurance', 'low'],
+ ['UBICACIÓN Y RIESGO'],
+ ['Commute al trabajo', h=>((h.commute['Trabajo (Kimberly-Clark, Irving)']||{}).min||'—')+' min', '_cw', 'low'],
+ ['Commute a DFW', h=>((h.commute['DFW Airport']||{}).min||'—')+' min', '_cd', 'low'],
+ ['Commute a Downtown', h=>((h.commute['Downtown Dallas']||{}).min||'—')+' min', '_cdt', 'low'],
+ ['Zona de inundación FEMA', h=>h.flood.zone+' (mínimo)', 'flood', 'none'],
+ ['Elevación', h=>h.elevation_ft+' ft', 'elevation_ft', 'high'],
+ ['MERCADO Y DEMANDA'],
+ ['Días en el mercado', h=>h.dom, 'dom', 'low'],
+ ['Favoritos en Zillow', h=>h.favs, 'favs', 'none'],
+ ['Visitas a la publicación', h=>h.views, 'views', 'none'],
+];
+function cmpVal(h,key){
+ if(key==='_cmp') return h.ppsf;
+ if(key==='_cw') return (h.commute['Trabajo (Kimberly-Clark, Irving)']||{}).min;
+ if(key==='_cd') return (h.commute['DFW Airport']||{}).min;
+ if(key==='_cdt') return (h.commute['Downtown Dallas']||{}).min;
+ if(key==='privatePool') return h.privatePool?1:0;
+ if(key==='listChangePct') return Math.abs(h.listChangePct);
+ return h[key];
+}
+let html='';
+for(const r of ROWS){
+ if(r.length===1){ html+=`<tr class="catrow"><td colspan="3">${r[0]}</td></tr>`; continue; }
+ const [label,fmt,key,dir]=r;
+ const va=cmpVal(A,key), vb=cmpVal(B,key);
+ let wa=false,wb=false;
+ if(dir==='high'||dir==='boolhigh'){ if(va>vb)wa=true; else if(vb>va)wb=true; }
+ else if(dir==='low'){ if(va!=null&&vb!=null){ if(va<vb)wa=true; else if(vb<va)wb=true; } }
+ html+=`<tr><td class="metric">${label}</td><td class="val ${wa?'win':''}">${fmt(A)}</td><td class="val ${wb?'win':''}">${fmt(B)}</td></tr>`;
+}
+document.getElementById('cmpbody').innerHTML=html;
+
+// ---------- cost calc + chart ----------
+let costChart, radarChart, histChart;
+function renderCost(){
+ const rate=+document.getElementById('rate').value, down=+document.getElementById('down').value;
+ document.getElementById('rateV').textContent=rate.toFixed(1)+'%';
+ document.getElementById('downV').textContent=down+'%';
+ const ma=monthly(A,rate,down), mb=monthly(B,rate,down);
+ document.getElementById('costbreak').innerHTML=
+  [['Cuota (P&I)',ma.pi,mb.pi],['Impuestos (MUD incl.)',ma.tax,mb.tax],['HOA',ma.hoa,mb.hoa],['Seguro',ma.ins,mb.ins],['TOTAL/mes',ma.total,mb.total]]
+  .map((x,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);${i===4?'font-weight:800;border-top:2px solid #0f172a;':''}"><span style="color:${i===4?'#0f172a':'#64748b'}">${x[0]}</span><span><b style="color:${VIC}">${usd(x[1])}</b> · <b style="color:${BRI}">${usd(x[2])}</b></span></div>`).join('')
+  +`<div class="mini" style="margin-top:8px">🟣 Victoria &nbsp; 🔵 Briscoe · 30 años, supuestos editables.</div>`;
+ const parts=['pi','tax','hoa','ins'], labels=['Cuota P&I','Impuestos','HOA','Seguro'];
+ const ds=[{label:'Victoria Ln',data:parts.map(k=>Math.round(ma[k])),backgroundColor:VIC},{label:'Briscoe Dr',data:parts.map(k=>Math.round(mb[k])),backgroundColor:BRI}];
+ if(window.Chart){
+  if(costChart)costChart.destroy();
+  costChart=new Chart(document.getElementById('cCost'),{type:'bar',data:{labels,datasets:ds},
+   options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:false},y:{ticks:{callback:v=>'$'+v}}},plugins:{title:{display:true,text:'Costo mensual: '+usd(ma.total)+' vs '+usd(mb.total)}}}});
+ }
+}
+document.getElementById('rate').oninput=renderCost;
+document.getElementById('down').oninput=renderCost;
+
+// ---------- radar ----------
+function norm(a,b,hi){ // returns [0..100,0..100], hi=true bigger better
+ const lo=Math.min(a,b),h=Math.max(a,b); if(h===lo)return[70,70];
+ let na=(a-lo)/(h-lo)*100, nb=(b-lo)/(h-lo)*100;
+ return hi?[na,nb]:[100-na,100-nb];
+}
+function renderRadar(){
+ if(!window.Chart)return;
+ const axes=['Precio (barato)','Espacio','Nuevo','Pileta/exterior','Bajo costo mens.','Cerca trabajo','Valor vs comps'];
+ const mA=monthly(A,6.6,20).total, mB=monthly(B,6.6,20).total;
+ const pairs=[
+  norm(A.price,B.price,false), norm(A.sqft,B.sqft,true), norm(A.year,B.year,true),
+  [A.privatePool?95:55,B.privatePool?95:55], norm(mA,mB,false),
+  norm((A.commute['Trabajo (Kimberly-Clark, Irving)']||{}).min,(B.commute['Trabajo (Kimberly-Clark, Irving)']||{}).min,false),
+  norm(A.ppsf/A.compMedianPpsf,B.ppsf/B.compMedianPpsf,false)
+ ];
+ const da=pairs.map(p=>Math.round(p[0])), db=pairs.map(p=>Math.round(p[1]));
+ if(radarChart)radarChart.destroy();
+ radarChart=new Chart(document.getElementById('cRadar'),{type:'radar',
+  data:{labels:axes,datasets:[{label:'Victoria Ln',data:da,borderColor:VIC,backgroundColor:'rgba(79,70,229,.18)'},{label:'Briscoe Dr',data:db,borderColor:BRI,backgroundColor:'rgba(14,165,233,.18)'}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false}}}}});
+}
+
+// ---------- price history ----------
+function renderHist(){
+ if(!window.Chart)return;
+ const ev=A.priceHistory.filter(e=>e.price&&e.price>50000).slice().reverse();
+ const pts=ev.map(e=>({x:e.date,y:e.price}));
+ if(histChart)histChart.destroy();
+ histChart=new Chart(document.getElementById('cHist'),{type:'line',
+  data:{datasets:[{label:'Victoria Ln — precio histórico',data:pts,borderColor:VIC,backgroundColor:'rgba(79,70,229,.12)',fill:true,tension:.2,pointRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,parsing:{xAxisKey:'x',yAxisKey:'y'},
+   scales:{x:{type:'category',ticks:{maxRotation:60,minRotation:40,font:{size:9}}},y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'k'}}},
+   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>usd(c.raw.y)}}}}});
+}
+
+// ---------- comps ----------
+function compsBox(h,color){
+ const rows=h.comps.filter(c=>c.price&&c.sqft).map(c=>`<tr><td>${usd(c.price)}</td><td>${c.sqft.toLocaleString()}</td><td><b>US$${Math.round(c.price/c.sqft)}</b></td><td>${c.beds||'?'}/${c.baths||'?'}</td></tr>`).join('');
+ const pos = h.ppsf>h.compMedianPpsf? `<b style="color:#b45309">+${Math.round((h.ppsf-h.compMedianPpsf)/h.compMedianPpsf*100)}% sobre</b>` : `<b style="color:#16a34a">${Math.round((h.ppsf-h.compMedianPpsf)/h.compMedianPpsf*100)}% vs</b>`;
+ return `<div class="fbox"><h4 style="color:${color}">${h.address}</h4>
+  <div class="mini">Lista a <b>US$${h.ppsf}/pie²</b> · mediana comps <b>US$${h.compMedianPpsf}/pie²</b> → ${pos} comparables</div>
+  <table class="cmp" style="margin-top:8px;font-size:12px;box-shadow:none"><thead><tr><th>Precio</th><th>Pie²</th><th>US$/pie²</th><th>Hab</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+document.getElementById('comps').innerHTML=compsBox(A,VIC)+compsBox(B,BRI);
+
+// ---------- features ----------
+function featBox(h,color){
+ const hot=['Tankless','Water Softener','Water Purifier','Double Oven','Zoned'];
+ const ap=(h.appliances||[]).map(x=>`<span class="${hot.some(k=>x.includes(k))?'hot':''}">${x}</span>`).join('');
+ const co=(h.community||[]).map(x=>`<span>${x}</span>`).join('');
+ const fl=(h.flooring||[]).join(', ');
+ const heat=(h.heating||[]).join(', '), cool=(h.cooling||[]).join(', ');
+ return `<div class="fbox"><h4 style="color:${color}">${h.address}</h4>
+  <div style="font-size:12.5px"><b>Construcción:</b> ${(h.construction||[]).join(', ')} · techo ${h.roof} · ${(h.foundation||[]).join(', ')}<br>
+  <b>Pisos:</b> ${fl}<br><b>Clima:</b> ${heat} / ${cool}<br><b>Cocheras:</b> ${(h.parking||[]).join(', ')}</div>
+  <div style="margin:8px 0 4px;font-size:12px;color:#64748b">Electrodomésticos (violeta = premium)</div><div class="taglist">${ap}</div>
+  <div style="margin:8px 0 4px;font-size:12px;color:#64748b">Comunidad</div><div class="taglist">${co}</div></div>`;
+}
+document.getElementById('features').innerHTML=featBox(A,VIC)+featBox(B,BRI);
+
+// ---------- flags ----------
+document.getElementById('flags').innerHTML=[
+ '<b>Impuestos MUD/PID:</b> la tasa efectiva real es ~1.9% (no 1.51%). Confirmá el monto exacto de MUD/PID de cada subdivisión en el Denton County CAD antes de calcular el costo final.',
+ '<b>Victoria ya bajó US$15k</b> en 6 días y está ~10% por encima del $/pie² de sus comparables → hay margen para negociar.',
+ '<b>Victoria tiene 25 movimientos de precio</b> (se vendió a ~$414k en 2020, fue alquiler). Pedí el historial de mantenimiento y por qué se revende ahora.',
+ '<b>Briscoe recién se listó</b> (1 día, sin Zestimate): poca data de mercado todavía; sus comparables son casas más chicas, así que el $/pie² no es 100% comparable.',
+ '<b>Ruido de aviones:</b> ambas están en el corredor de DFW. Vale chequear HowLoud y visitar a distintas horas.',
+ '<b>Pileta:</b> Briscoe tiene pileta privada (más disfrute, más mantenimiento/seguro); Victoria usa la comunitaria.',
+].map(x=>`<li>${x}</li>`).join('');
+
+// ---------- sources ----------
+document.getElementById('src-in').innerHTML=M.sources.map(s=>`<div class="srcitem"><b>${s[0]}</b><span class="st ok">${s[2]}</span><br><span class="mini">${s[1]}</span></div>`).join('');
+document.getElementById('src-sug').innerHTML=M.suggested.map(s=>{const cls=s[2].includes('gratis')?'free':'req';return `<div class="srcitem"><b>${s[0]}</b><span class="st ${cls}">${s[2]}</span><br><span class="mini">${s[1]}</span></div>`;}).join('');
+
+document.getElementById('foot').innerHTML='Datos de Zillow (vía Apify), commute OSRM (sin tráfico en vivo), zona de inundación FEMA NFHL, elevación USGS, ingreso del área (Census/IncomeByZip). Generado '+new Date().toLocaleDateString('es-AR')+'. Estimaciones para orientación, no asesoramiento financiero ni inmobiliario. Verificá impuestos MUD/PID, condición y disponibilidad con tu agente.';
+
+// ---------- map ----------
+window.addEventListener('load',()=>{
+ renderCost(); renderRadar(); renderHist();
+ if(window.L){
+  const map=L.map('map').setView([(A.lat+B.lat)/2,(A.lng+B.lng)/2],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const mk=(lat,lng,color,txt)=>L.circleMarker([lat,lng],{radius:11,fillColor:color,color:'#fff',weight:2,fillOpacity:.95}).bindPopup(txt).addTo(map);
+  mk(A.lat,A.lng,VIC,'<b>🟣 '+A.address+'</b><br>'+usd(A.price));
+  mk(B.lat,B.lng,BRI,'<b>🔵 '+B.address+'</b><br>'+usd(B.price));
+  const wIcon=L.divIcon({html:'<div style="font-size:22px">🏢</div>',className:'',iconSize:[22,22],iconAnchor:[11,11]});
+  L.marker([M.work.lat,M.work.lng],{icon:wIcon}).bindPopup('🏢 Tu trabajo — '+M.work.name).addTo(map);
+  const aIcon=L.divIcon({html:'<div style="font-size:20px">✈️</div>',className:'',iconSize:[20,20],iconAnchor:[10,10]});
+  L.marker([M.dfw.lat,M.dfw.lng],{icon:aIcon}).bindPopup('✈️ DFW Airport').addTo(map);
+  map.fitBounds([[A.lat,A.lng],[B.lat,B.lng],[M.work.lat,M.work.lng],[M.dfw.lat,M.dfw.lng]],{padding:[40,40]});
+  setTimeout(()=>map.invalidateSize(),120);
+ } else { document.getElementById('map').innerHTML='<div style="padding:30px;text-align:center;color:#64748b">Mapa no disponible sin internet.</div>'; }
+});
+</script>
+</body>
+</html>
